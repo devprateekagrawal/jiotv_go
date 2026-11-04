@@ -100,3 +100,8 @@ a.card[data-channel-id]:focus-visible {
   outline-offset: 2px;
   border-color: #ffd54a;
 }
+
+/* Logos keep their 4:3 shape inside the square tile; white-on-transparent
+   logos get a dark tile (logo_tiles.js adds the class). */
+img.logo-tile, #tvl .vlogo { object-fit: contain; }
+img.logo-tile.logo-on-dark, #tvl .vlogo.logo-on-dark, #tvl.L6 .vt .vcard .vlogo.logo-on-dark { background-color: #2b3142 !important; }
