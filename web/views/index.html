@@ -6,6 +6,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <title>{{ .Title }}</title>
     {{ template "styling" . }}
+    <link rel="stylesheet" href="/static/internal/tv_layouts.css" />
   </head>
 
   <body class="flex flex-col min-h-screen">
@@ -39,6 +40,7 @@
     <script src="/static/internal/index.js"></script>
     <script src="/static/internal/common.js"></script>
     <script src="/static/internal/remote.js"></script>
+    <script src="/static/internal/tv_layouts.js"></script>
     <script src="/static/internal/nowplaying_cards.js"></script>
     {{ template "footer" . }}
   </body>

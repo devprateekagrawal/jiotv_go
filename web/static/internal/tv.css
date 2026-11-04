@@ -86,3 +86,17 @@ a.card[data-channel-id]:focus-visible {
   position: sticky;
   top: 4.5rem;
 }
+
+/* Player page: a clear way back to the channel list */
+#back-to-channels {
+  background: #1f2537;
+  color: #fff;
+  border: 2px solid #2f3854;
+  font-size: 1.1rem;
+}
+#back-to-channels:focus,
+#back-to-channels:focus-visible {
+  outline: 4px solid #ffd54a;
+  outline-offset: 2px;
+  border-color: #ffd54a;
+}

@@ -1,0 +1,161 @@
+/* tv_layouts.css — the six TV styles picked from the Style popup.
+   Lightweight on purpose: no blur, no web fonts; only transform and colours
+   change on focus so TV browsers stay smooth. Every rule is scoped under
+   #tvl and the class names carry a "v" prefix so Tailwind/daisyUI classes
+   (grid, card, tab, list ...) never collide. */
+
+body.tvl-on { overflow: hidden; }
+body.tvl-on #portexe-search-root,
+body.tvl-on #original-channels-grid,
+body.tvl-on #favorite-channels-section,
+body.tvl-on footer,
+body.tvl-on .btn.fixed.bottom-5 { display: none !important; }
+
+#tvl { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #0b0d12; color: #e8eaf0;
+  font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif; }
+#tvl * { box-sizing: border-box; }
+#tvl a { color: inherit; text-decoration: none; }
+#tvl img { display: block; }
+#tvl [data-f] { outline: none; }
+
+/* Sticky search bar: stays on screen whatever the layout scrolls */
+#vsb { position: absolute; top: 0; left: 0; right: 0; height: 76px; display: flex; align-items: center; gap: 16px;
+  padding: 0 40px; background: #0b0d12; border-bottom: 1px solid #1c2030; z-index: 2; }
+#vq { flex: 1; max-width: 760px; font: inherit; font-size: 22px; padding: 12px 22px 12px 52px; border-radius: 999px;
+  border: 2px solid #262c3d; color: #fff; outline: none;
+  background: #151925 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%238a90a3' stroke-width='2.5'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cpath d='M15 15l6 6'/%3E%3C/svg%3E") no-repeat 18px center; }
+#vq:focus { border-color: #ffd54a; box-shadow: 0 0 0 3px rgba(255, 213, 74, .3); }
+#vcnt { font-size: 16px; opacity: .6; }
+.vstyle-btn { margin-left: auto; font: inherit; font-size: 17px; padding: 10px 20px; border-radius: 999px; border: 0;
+  background: #1a1e2b; color: #e8eaf0; cursor: pointer; }
+.vstyle-btn:focus { outline: 3px solid #ffd54a; outline-offset: 2px; }
+#vapp { position: absolute; top: 76px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+#tvl .vscroll { height: 100%; overflow-y: auto; overflow-x: hidden; }
+#tvl .vnone { padding: 60px; font-size: 22px; opacity: .6; text-align: center; }
+
+/* Shared bits */
+#tvl .vlogo { background: #fff; border-radius: 10px; object-fit: contain; }
+#tvl .vprog { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+#tvl .vprog i { display: block; height: 100%; background: #ffd54a; }
+#tvl .vell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tvl .vhd, #tvl .vlk { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700;
+  padding: 1px 5px; border-radius: 4px; background: #2a3042; color: #aab; margin-left: 6px; vertical-align: 2px; }
+#tvl .vlk { background: #3a2f12; color: #ffd54a; }
+#tvl .vlk svg { width: 10px; height: 10px; }
+
+/* 1 — Lite grid */
+#tvl.L1 .vwrap { padding: 28px 40px 60px; }
+#tvl .vchips { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+#tvl .vchip { font-size: 17px; padding: 10px 20px; border-radius: 999px; background: #171b26; color: #c9cdd8; cursor: pointer; }
+#tvl .vchip.on { background: #2b3350; color: #fff; }
+#tvl .vchip:focus { box-shadow: 0 0 0 3px #ffd54a; }
+#tvl.L1 .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+#tvl.L1 .vt { background: #151925; border-radius: 14px; padding: 18px 14px 14px; display: flex; flex-direction: column;
+  align-items: center; border: 2px solid transparent; transition: transform .12s; }
+#tvl.L1 .vt .vlogo { width: 96px; height: 96px; }
+#tvl.L1 .vt .nm { margin-top: 12px; font-size: 18px; font-weight: 600; max-width: 100%; }
+#tvl.L1 .vt .sh { margin-top: 4px; font-size: 15px; opacity: .65; max-width: 100%; }
+#tvl.L1 .vt .vprog { width: 100%; margin-top: 10px; }
+#tvl.L1 .vt:focus { border-color: #ffd54a; transform: scale(1.06); background: #1d2232; }
+
+/* 2 — Category rows */
+#tvl.L2 .vwrap { padding: 8px 0 80px; }
+#tvl.L2 h2 { font-size: 24px; font-weight: 600; margin: 22px 48px 12px; }
+#tvl .vrow { display: flex; gap: 18px; overflow-x: auto; overflow-y: hidden; padding: 10px 48px 16px; scrollbar-width: none; }
+#tvl .vrow::-webkit-scrollbar { display: none; }
+#tvl.L2 .vt { flex: 0 0 250px; background: #151925; border-radius: 14px; overflow: hidden; border: 2px solid transparent; transition: transform .12s; }
+#tvl.L2 .vt .top { height: 120px; background: #fff; display: flex; align-items: center; justify-content: center; }
+#tvl.L2 .vt .top .vlogo { width: 100px; height: 100px; border-radius: 0; }
+#tvl.L2 .vt .b { padding: 10px 12px 12px; }
+#tvl.L2 .vt .nm { font-size: 16px; font-weight: 600; }
+#tvl.L2 .vt .sh { font-size: 14px; opacity: .65; margin: 3px 0 8px; }
+#tvl.L2 .vt:focus { border-color: #ffd54a; transform: scale(1.06); }
+
+/* 3 — Guide */
+#tvl.L3 .vwrap { padding: 16px 40px 60px; }
+#tvl .vg { display: grid; grid-template-columns: 110px 300px 1fr 130px; align-items: center; gap: 20px; padding: 12px 18px;
+  border-radius: 12px; border: 2px solid transparent; margin-bottom: 6px; background: #121620; }
+#tvl .vg:nth-child(even) { background: #0f121a; }
+#tvl .vg .vlogo { width: 76px; height: 76px; }
+#tvl .vg .nm { font-size: 19px; font-weight: 600; }
+#tvl .vg .ct { font-size: 14px; opacity: .55; margin-top: 3px; }
+#tvl .vg .sh { font-size: 19px; }
+#tvl .vg .vprog { margin-top: 9px; height: 5px; }
+#tvl .vg .tl { font-size: 16px; opacity: .7; text-align: right; }
+#tvl .vg:focus { border-color: #ffd54a; background: #1d2232; }
+
+/* 4 — Side rail */
+#tvl.L4 .vwrap { display: flex; height: 100%; }
+#tvl .vrail { width: 270px; padding: 24px 18px; border-right: 1px solid #1c2030; flex: none; overflow-y: auto; }
+#tvl .vri { display: block; font-size: 19px; padding: 13px 18px; border-radius: 10px; margin-bottom: 4px; color: #aeb3c2; cursor: pointer; }
+#tvl .vri.on { background: #1b2133; color: #fff; font-weight: 600; }
+#tvl .vri:focus { box-shadow: 0 0 0 3px #ffd54a; color: #fff; }
+#tvl .vmain { flex: 1; padding: 24px 36px 60px; }
+#tvl .vmain h2 { font-size: 30px; margin-bottom: 20px; }
+#tvl.L4 .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+#tvl.L4 .vt { background: #151925; border-radius: 14px; padding: 16px 12px 12px; display: flex; flex-direction: column;
+  align-items: center; border: 2px solid transparent; transition: transform .12s; }
+#tvl.L4 .vt .vlogo { width: 84px; height: 84px; }
+#tvl.L4 .vt .nm { margin-top: 10px; font-size: 16px; font-weight: 600; max-width: 100%; }
+#tvl.L4 .vt .sh { font-size: 14px; opacity: .6; max-width: 100%; margin-top: 3px; }
+#tvl.L4 .vt:focus { border-color: #ffd54a; transform: scale(1.06); }
+
+/* 5 — List + preview */
+#tvl.L5 .vwrap { display: flex; height: 100%; }
+#tvl .vlist { width: 520px; flex: none; padding: 18px 16px 60px 32px; }
+#tvl .vli { display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-radius: 10px; border: 2px solid transparent; }
+#tvl .vli .vlogo { width: 52px; height: 52px; flex: none; }
+#tvl .vli .nm { font-size: 18px; font-weight: 600; }
+#tvl .vli .sh { font-size: 14px; opacity: .6; }
+#tvl .vli > div { min-width: 0; }
+#tvl .vli:focus { border-color: #ffd54a; background: #1a1f2e; }
+#tvl .vpv { flex: 1; padding: 60px 80px; border-left: 1px solid #1c2030; background: linear-gradient(160deg, #151a28, #0b0d12 60%); }
+#tvl .vpv .vlogo { width: 200px; height: 200px; border-radius: 24px; }
+#tvl .vpv h1 { font-size: 52px; margin-top: 36px; font-weight: 700; }
+#tvl .vpv .ct { font-size: 20px; opacity: .6; margin-top: 8px; }
+#tvl .vpv .now { margin-top: 40px; font-size: 15px; letter-spacing: 2px; color: #ffd54a; font-weight: 700; }
+#tvl .vpv .sh { font-size: 34px; margin-top: 10px; font-weight: 600; }
+#tvl .vpv .vprog { height: 6px; margin-top: 20px; max-width: 620px; }
+#tvl .vpv .tl { margin-top: 12px; font-size: 18px; opacity: .7; }
+#tvl .vpv .ok { margin-top: 44px; display: inline-block; font-size: 18px; padding: 12px 26px; border-radius: 999px; background: #e8eaf0; color: #0b0d12; font-weight: 600; }
+
+/* 6 — Apple TV style (light). Real tvOS blurs; solid colours keep it light. */
+#tvl.L6 { background: #f2f2f7; color: #1c1c1e; }
+#tvl.L6 #vsb { background: #f2f2f7; border-color: #e0e0e6; }
+#tvl.L6 #vq { background-color: #fff; border-color: #d8d8de; color: #1c1c1e; }
+#tvl.L6 #vq:focus { border-color: #1c1c1e; box-shadow: 0 0 0 3px rgba(0, 0, 0, .12); }
+#tvl.L6 .vstyle-btn { background: #e4e4ea; color: #1c1c1e; }
+#tvl.L6 .vstyle-btn:focus { outline-color: #1c1c1e; }
+#tvl.L6 .vwrap { padding: 6px 60px 80px; }
+#tvl .vtabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 18px auto 8px; padding: 6px; background: #e4e4ea; border-radius: 28px; width: max-content; max-width: 100%; }
+#tvl .vtab { font-size: 18px; padding: 10px 24px; border-radius: 999px; color: #3a3a3c; transition: transform .15s; cursor: pointer; }
+#tvl .vtab.on { background: #fff; color: #000; font-weight: 600; }
+#tvl .vtab:focus { background: #1c1c1e; color: #fff; transform: scale(1.08); }
+#tvl.L6 h1 { font-size: 44px; font-weight: 700; letter-spacing: -.5px; margin: 30px 0 22px; }
+#tvl.L6 .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 34px 30px; }
+#tvl.L6 .vt { display: block; transition: transform .18s ease-out; }
+#tvl.L6 .vt .vcard { background: #fff; border-radius: 18px; height: 150px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0, 0, 0, .08); }
+#tvl.L6 .vt .vcard .vlogo { width: 110px; height: 110px; border-radius: 0; background: none; }
+#tvl.L6 .vt .nm { font-size: 17px; font-weight: 600; margin: 12px 4px 0; color: #1c1c1e; }
+#tvl.L6 .vt .sh { font-size: 15px; color: #6e6e73; margin: 2px 4px 0; }
+#tvl.L6 .vprog { background: #e4e4ea; margin: 8px 4px 0; }
+#tvl.L6 .vprog i { background: #1c1c1e; }
+#tvl.L6 .vhd { background: #e4e4ea; color: #6e6e73; }
+#tvl.L6 .vlk { background: #fff1cc; color: #8a6100; }
+#tvl.L6 .vt:focus { transform: scale(1.1); }
+#tvl.L6 .vt:focus .vcard { box-shadow: 0 18px 34px rgba(0, 0, 0, .22); }
+#tvl.L6 .vt:focus .vprog i { background: #0a84ff; }
+
+/* Style picker popup */
+#vstyle { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, .6); }
+#vstyle.open { display: flex; }
+#vstyle .box { background: #151925; color: #e8eaf0; border-radius: 20px; padding: 28px 30px; width: min(560px, 92vw);
+  font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; }
+#vstyle h3 { font-size: 26px; font-weight: 700; margin: 0 0 6px; }
+#vstyle p { font-size: 15px; opacity: .6; margin: 0 0 18px; }
+#vstyle button { display: flex; width: 100%; align-items: center; gap: 14px; text-align: left; font: inherit; font-size: 19px;
+  padding: 12px 16px; margin-bottom: 6px; border-radius: 12px; border: 2px solid transparent; background: #1c2130; color: inherit; cursor: pointer; }
+#vstyle button small { margin-left: auto; font-size: 14px; opacity: .55; }
+#vstyle button.on { background: #2b3350; font-weight: 600; }
+#vstyle button.on::after { content: "✓"; margin-left: 10px; color: #ffd54a; }
+#vstyle button:focus { outline: none; border-color: #ffd54a; }

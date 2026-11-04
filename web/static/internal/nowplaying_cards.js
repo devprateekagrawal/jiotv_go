@@ -36,6 +36,9 @@
       return;
     }
     if (!shows || typeof shows !== "object") return;
+    // Share with tv_layouts.js so the TV styles need no second request.
+    window.JTV_NP = shows;
+    document.dispatchEvent(new CustomEvent("jtv-nowplaying", { detail: shows }));
     const now = Date.now() / 1000;
     document.querySelectorAll("a.card[data-channel-id]").forEach((card) => {
       const show = shows[card.dataset.channelId];

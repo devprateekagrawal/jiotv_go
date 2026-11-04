@@ -83,6 +83,9 @@
       href="/play/{{$channel.ID}}"
       class="card relative border border-primary bg-base-100 shadow-sm group"
       data-channel-id="{{$channel.ID}}"
+      data-channel-name="{{$channel.Name}}"
+      data-category="{{$channel.Category}}"
+      data-hd="{{$channel.IsHD}}"
       data-catchup-available="{{if $channel.IsCatchupAvailable}}true{{else}}false{{end}}"
       {{if $channel.RequiresSubscription}}data-requires-subscription="true"{{end}}
       tabindex="0"

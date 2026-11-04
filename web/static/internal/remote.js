@@ -102,17 +102,20 @@
       e.key === "Backspace" ||
       e.key === "BrowserBack" ||
       e.key === "GoBack" ||
-      e.key === "Back";
+      e.key === "Back" ||
+      e.keyCode === 10009 || // Samsung Tizen remote Back
+      e.keyCode === 461; // LG webOS remote Back
     if (isBackKey) {
       // Dialogs handle Escape natively; don't fight them.
       if (document.querySelector("dialog[open]")) return;
       const active = document.activeElement;
       if (keepsArrowKeys(active)) return;
       if (e.key === "Backspace" && active !== document.body) return;
-      // Player pages: Back returns to the previous page, like a TV remote.
+      // Player pages: Back always opens the channel list, even after
+      // hopping between channels.
       if (document.getElementById("playerIframe")) {
         e.preventDefault();
-        window.history.back();
+        window.location.href = "/";
       }
       return;
     }
