@@ -154,6 +154,7 @@
   function apply(style) {
     L = style;
     store("tvStyle", style);
+    document.documentElement.classList.remove("tvl-pre", "tvl-pre1", "tvl-pre2", "tvl-pre3", "tvl-pre4", "tvl-pre5", "tvl-pre6");
     if (style === "classic") {
       document.body.classList.remove("tvl-on");
       if (root) root.style.display = "none";

@@ -7,6 +7,14 @@
     <title>{{ .Title }}</title>
     {{ template "styling" . }}
     <link rel="stylesheet" href="/static/internal/tv_layouts.css" />
+    <script>
+      // Hide the classic list before it paints when a TV style is saved, so
+      // it does not flash while tv_layouts.js builds the style.
+      try {
+        var tvStyle = localStorage.getItem("tvStyle");
+        if (tvStyle && tvStyle !== "classic") document.documentElement.classList.add("tvl-pre", "tvl-pre" + tvStyle);
+      } catch (e) {}
+    </script>
   </head>
 
   <body class="flex flex-col min-h-screen">

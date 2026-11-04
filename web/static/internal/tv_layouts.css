@@ -5,6 +5,10 @@
    (grid, card, tab, list ...) never collide. */
 
 body.tvl-on { overflow: hidden; }
+html.tvl-pre body { overflow: hidden; background: #0b0d12; }
+html.tvl-pre6 body { background: #f2f2f7; }
+html.tvl-pre #portexe-search-root, html.tvl-pre #original-channels-grid, html.tvl-pre #favorite-channels-section,
+html.tvl-pre footer, html.tvl-pre .btn.fixed.bottom-5,
 body.tvl-on #portexe-search-root,
 body.tvl-on #original-channels-grid,
 body.tvl-on #favorite-channels-section,
