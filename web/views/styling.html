@@ -4,10 +4,9 @@
   // default palette while common.js is still waiting at the end of <body>.
   (() => {
     try {
-      const storedTheme = localStorage.getItem("theme");
-      const theme = storedTheme || (
-        window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-      );
+      // Dark unless the user picked light with the toggle: TV browsers often
+      // report a light system theme, and dark suits a TV room better.
+      const theme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", theme);
     } catch (_) {
       document.documentElement.setAttribute("data-theme", "dark");
@@ -15,4 +14,5 @@
   })();
 </script>
 <link href="/static/internal/tailwind.css" rel="stylesheet" />
+<link href="/static/internal/tv.css" rel="stylesheet" />
 {{ end }}

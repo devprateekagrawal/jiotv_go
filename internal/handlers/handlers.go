@@ -184,6 +184,9 @@ func IndexHandler(c *fiber.Ctx) error {
 		utils.SafeLogf("Unable to fetch premium providers: %v", premiumErr)
 	}
 
+	// Show only the preferred-language feed of multi-language channels (e.g. "Discovery Hindi")
+	channels.Result = television.PreferLanguageVariants(channels.Result, preferredLanguage(c))
+
 	// Get language and category from query params
 	language := c.Query("language")
 	category := c.Query("category")
@@ -1090,6 +1093,7 @@ func ChannelsHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return ErrorMessageHandler(c, err)
 	}
+	apiResponse.Result = television.PreferLanguageVariants(apiResponse.Result, preferredLanguage(c))
 	// hostUrl should be request URL like http://localhost:5001
 	hostURL := strings.ToLower(c.Protocol()) + "://" + c.Hostname()
 
@@ -1328,7 +1332,11 @@ func PlaylistHandler(c *fiber.Ctx) error {
 	languages := c.Query("l")
 	skipGenres := c.Query("sg")
 	subFilter := c.Query("sub")
-	return c.Redirect("/channels?type=m3u&q="+quality+"&c="+splitCategory+"&l="+languages+"&sg="+skipGenres+"&sub="+subFilter, fiber.StatusMovedPermanently)
+	target := "/channels?type=m3u&q=" + quality + "&c=" + splitCategory + "&l=" + languages + "&sg=" + skipGenres + "&sub=" + subFilter
+	if pl := c.Query("pl"); pl != "" {
+		target += "&pl=" + url.QueryEscape(pl)
+	}
+	return c.Redirect(target, fiber.StatusMovedPermanently)
 }
 
 // ImageHandler loads image from JioTV server

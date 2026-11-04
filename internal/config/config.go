@@ -40,6 +40,9 @@ type JioTVConfig struct {
 	DefaultCategories []int `yaml:"default_categories" env:"JIOTV_DEFAULT_CATEGORIES" json:"default_categories" toml:"default_categories"`
 	// DefaultLanguages is the list of language IDs to display on the default web page. Default: []
 	DefaultLanguages []int `yaml:"default_languages" env:"JIOTV_DEFAULT_LANGUAGES" json:"default_languages" toml:"default_languages"`
+	// PreferredLanguage keeps only this language's feed of channels that JioTV carries as separate
+	// per-language feeds (shows "Discovery Hindi", hides "Discovery Tamil"). "off" shows every feed. Default: Hindi
+	PreferredLanguage string `yaml:"preferred_language" env:"JIOTV_PREFERRED_LANGUAGE" json:"preferred_language" toml:"preferred_language"`
 }
 
 // Cfg is the global config variable
@@ -52,6 +55,7 @@ var Cfg JioTVConfig
 func (c *JioTVConfig) Load(filename string) error {
 	// Set default value for DRM manually because cleanenv env-default on booleans overwrites explicit false values
 	c.DRM = true
+	c.PreferredLanguage = "Hindi"
 
 	if filename == "" {
 		filename = commonFileExists()

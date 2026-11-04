@@ -1,0 +1,88 @@
+/* tv.css — TV-friendly channel list (tv-hindi fork).
+   Plain CSS loaded after tailwind.css so no Tailwind rebuild is needed.
+   Bigger cards and logos on wide screens, a focus ring you can see from the
+   sofa, and the show airing now on each card. */
+
+/* Use the full width of a TV screen instead of a 1280px column */
+@media (min-width: 1440px) {
+  body > .container {
+    max-width: min(96vw, 2200px);
+  }
+}
+
+/* Bigger tiles on TV-sized screens */
+@media (min-width: 1024px) {
+  #original-channels-grid,
+  #favorite-channels-container {
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: 1.25rem;
+  }
+  a.card[data-channel-id] img.logo-tile {
+    width: 6rem;
+    height: 6rem;
+  }
+  a.card[data-channel-id] > div > span.font-bold {
+    font-size: 1.15rem;
+  }
+}
+
+/* Focus: a thick bright ring plus a small zoom, visible across the room.
+   :focus as well as :focus-visible, because some TV browsers move focus
+   from script without setting focus-visible. */
+a.card[data-channel-id]:focus,
+a.card[data-channel-id]:focus-visible {
+  outline: 4px solid #ffd54a;
+  outline-offset: 3px;
+  transform: scale(1.06);
+  z-index: 5;
+  border-color: #ffd54a;
+  box-shadow: 0 0 0 6px rgba(255, 213, 74, 0.25), 0 18px 36px -12px rgba(0, 0, 0, 0.7);
+}
+#portexe-search-root :focus,
+#portexe-search-root :focus-visible,
+.navbar :focus-visible {
+  outline: 4px solid #ffd54a;
+  outline-offset: 2px;
+}
+
+/* Show airing now */
+.np-title {
+  display: block;
+  margin-top: 0.35rem;
+  width: 100%;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  text-align: center;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.np-title:empty {
+  display: none;
+}
+.np-bar {
+  display: block;
+  height: 3px;
+  width: 100%;
+  margin-top: 0.35rem;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.np-bar > i {
+  display: block;
+  height: 100%;
+  background: #ffd54a;
+}
+@media (min-width: 1024px) {
+  .np-title {
+    font-size: 0.95rem;
+  }
+}
+
+/* Keep the filter bar reachable while scrolling a long list */
+#portexe-search-root {
+  position: sticky;
+  top: 4.5rem;
+}

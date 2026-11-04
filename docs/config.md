@@ -153,6 +153,21 @@ JIOTV_DEFAULT_CATEGORIES=5,6 JIOTV_DEFAULT_LANGUAGES=1,6
 - Show only Entertainment and Movies channels in Hindi and English: `default_categories = [5, 6]`, `default_languages = [1, 6]`
 - Show all Sports channels regardless of language: `default_categories = [8]`, `default_languages = []`
 - Show all Hindi content regardless of category: `default_categories = []`, `default_languages = [1]`
+
+### Preferred Language Feed:
+
+JioTV streams carry one audio language each. Channels offered in several languages are separate channels, such as "Discovery Hindi", "Discovery Tamil" and "Discovery English". With `preferred_language` set, the web channel list, `/channels` and `/playlist.m3u` show only that language's feed of such channels. The other-language feeds of the same channel are hidden. Channels without a feed in that language are not changed, so a channel disappears only when its preferred-language version is in the list.
+
+| Description | Config Key | Environment Variable | Default |
+|-------------|------------|---------------------|---------|
+| Language whose feed to keep for multi-language channels; `off` shows every feed. | `preferred_language` | `JIOTV_PREFERRED_LANGUAGE` | `Hindi` |
+
+Add `pl=off` (or `pl=Tamil`, etc.) to a URL to override the setting for one request, e.g. `/playlist.m3u?pl=off`.
+
+### Now Playing:
+
+When `epg = true`, `/nowplaying` returns the show airing now on every channel, read from the local EPG file. The web channel list uses it to show the current show and its progress on each card.
+
 ## Example Configurations
 
 Below are example configuration file for JioTV Go. All fields are optional, and the values shown are the default settings:

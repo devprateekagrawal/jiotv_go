@@ -99,6 +99,11 @@ func TestDefaultCategoriesAndLanguagesConfig(t *testing.T) {
 				t.Fatalf("Failed to load config: %v", err)
 			}
 
+			// Load fills PreferredLanguage with "Hindi" when the file leaves it out.
+			if tt.expected.PreferredLanguage == "" {
+				tt.expected.PreferredLanguage = "Hindi"
+			}
+
 			// Compare the entire loaded config with the expected config.
 			if !reflect.DeepEqual(config, tt.expected) {
 				t.Errorf("Config mismatch.\nGot:    %+v\nWanted: %+v", config, tt.expected)

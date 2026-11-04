@@ -131,6 +131,7 @@ func JioTVServer(jiotvServerConfig JioTVServerConfig) error {
 	app.Get("/favicon.ico", handlers.FaviconHandler)
 	app.Get("/jtvimage/:file", handlers.ImageHandler)
 	app.Get("/epg.xml.gz", handlers.EPGHandler)
+	app.Get("/nowplaying", handlers.NowPlayingHandler)
 	app.Get("/epg/:channelID/:offset", handlers.WebEPGHandler)
 	app.Get("/jtvposter/:date/:file", handlers.PosterHandler)
 	app.Get("/mpd/:channelID", handlers.LiveMpdHandler)
