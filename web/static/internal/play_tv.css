@@ -1,0 +1,64 @@
+/* play_tv.css — the play page in the look of the TV style picked on the
+   channel list (localStorage "tvStyle"). play.html puts "tvp" and
+   "tvp<style>" on <html> when a style other than Classic is chosen; with
+   Classic nothing here applies. Same rules as tv_layouts.css: no blur, no
+   web fonts, only colour and transform change on focus. */
+
+html.tvp, html.tvp body { background: #0b0d12 !important; color: #e8eaf0;
+  font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif; }
+html.tvp .navbar { background: #0b0d12 !important; backdrop-filter: none !important; border-color: #1c2030 !important;
+  box-shadow: none !important; }
+html.tvp footer { display: none; }
+
+/* Wider player on TV screens: less side margin than the stock xl:mx-52 */
+@media (min-width: 1024px) {
+  html.tvp .lg\:grid { margin-left: 40px !important; margin-right: 40px !important; gap: 28px !important; }
+  html.tvp #similar_channels_parent { margin-left: 40px !important; margin-right: 40px !important; }
+}
+
+html.tvp #back-to-channels { min-height: 0; height: auto; padding: 10px 22px; border-radius: 999px; border: 0;
+  background: #1a1e2b; color: #e8eaf0; font-size: 18px; font-weight: 600; box-shadow: none; }
+html.tvp #back-to-channels:focus, html.tvp #back-to-channels:focus-visible,
+html.tvp #back-to-channels:hover { outline: 3px solid #ffd54a; outline-offset: 2px; background: #232838; }
+
+html.tvp #player { border-radius: 16px !important; box-shadow: none !important; --tw-ring-color: #1c2030 !important; }
+html.tvp #aspect-43-toggle { background: #1a1e2b; border-color: #262c3d !important; color: #c9cdd8; border-radius: 999px; }
+html.tvp #aspect-43-toggle:focus { outline: 3px solid #ffd54a; outline-offset: 2px; }
+
+html.tvp .section-title { color: #8a90a3; font-size: 15px; letter-spacing: .08em; }
+html.tvp #epg .card { background: #151925 !important; border-color: #1c2030 !important; border-radius: 16px; box-shadow: none !important;
+  overflow: hidden; }
+html.tvp #showname { font-size: 22px; color: #fff; }
+html.tvp #description { color: #c9cdd8; font-size: 15px; }
+html.tvp #epg .badge-error { border-color: #ff5a5f; color: #ff5a5f; }
+html.tvp #keywords .badge { border-color: #2a3042; color: #aab; }
+
+/* Similar channels: the Lite Grid tile */
+html.tvp #similar_channels { gap: 18px !important; }
+html.tvp #similar_channels a.card { background: #151925 !important; border: 2px solid transparent !important; border-radius: 14px;
+  box-shadow: none !important; transition: transform .12s; }
+html.tvp #similar_channels a.card img { width: 72px; height: 72px; background: #fff; border-radius: 10px; object-fit: contain;
+  --tw-ring-color: transparent !important; }
+html.tvp #similar_channels a.card span { font-size: 16px; color: #e8eaf0; }
+html.tvp #similar_channels a.card:focus, html.tvp #similar_channels a.card:hover { border-color: #ffd54a !important;
+  transform: scale(1.06); background: #1d2232 !important; outline: none; }
+
+/* 6 — Apple TV: light */
+html.tvp6, html.tvp6 body { background: #f2f2f7 !important; color: #1c1c1e; }
+html.tvp6 .navbar { background: #f2f2f7 !important; border-color: #e0e0e6 !important; color: #1c1c1e; }
+html.tvp6 #back-to-channels, html.tvp6 #aspect-43-toggle { background: #e4e4ea; color: #1c1c1e; border-color: #d8d8de !important; }
+html.tvp6 #back-to-channels:focus, html.tvp6 #back-to-channels:hover, html.tvp6 #aspect-43-toggle:focus { outline-color: #1c1c1e; background: #fff; }
+html.tvp6 #player { --tw-ring-color: #e0e0e6 !important; }
+html.tvp6 .section-title { color: #6e6e73; }
+html.tvp6 #epg .card { background: #fff !important; border-color: #e0e0e6 !important; }
+html.tvp6 #showname { color: #1c1c1e; }
+html.tvp6 #description { color: #3a3a3c; }
+html.tvp6 #keywords .badge { border-color: #d8d8de; color: #6e6e73; }
+html.tvp6 #similar_channels a.card { background: #fff !important; border-color: #e5e5ea !important; }
+html.tvp6 #similar_channels a.card span { color: #1c1c1e; }
+html.tvp6 #similar_channels a.card:focus, html.tvp6 #similar_channels a.card:hover { border-color: #1c1c1e !important;
+  background: #fff !important; box-shadow: 0 10px 30px rgba(0, 0, 0, .15) !important; }
+/* The app theme stays dark under style 6, so give the navbar dark text. */
+html.tvp6 .navbar :is(span, label, a, button):not(.brand-gradient) { color: #1c1c1e !important; }
+html.tvp6 .navbar .btn { border-color: #c7c7cc !important; background: #fff; }
+html.tvp6 .navbar .toggle { --tglbg: #e4e4ea; border-color: #8e8e93; color: #1c1c1e; }

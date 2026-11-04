@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ .Title }}</title>
     {{ template "styling" . }}
+    <link rel="stylesheet" href="/static/internal/play_tv.css" />
+    <script>
+      // Match the TV style picked on the channel list (see tv_layouts.js).
+      try {
+        var tvStyle = localStorage.getItem("tvStyle");
+        if (tvStyle && tvStyle !== "classic") document.documentElement.classList.add("tvp", "tvp" + tvStyle);
+      } catch (e) {}
+    </script>
   </head>
 
   <body>

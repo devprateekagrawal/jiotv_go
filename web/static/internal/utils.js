@@ -160,6 +160,9 @@ function suppressSubscriptionWarning(channelId) {
 }
 
 function initSubscriptionWarnings() {
+  // Turned off: channels open straight away, without the
+  // "Subscription may be required" dialog. Locked tiles still show a lock badge.
+  return;
   const modal = safeGetElementById("locked_channel_modal", true);
   if (!modal) return;
 
