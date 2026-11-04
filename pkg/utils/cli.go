@@ -44,6 +44,7 @@ func CommonServerFlags() []cli.Flag {
 		BoolFlag("tls", "Enable TLS. This will enable HTTPS for the server.", "https"),
 		StringFlag("tls-cert", "", "Path to TLS certificate file", "cert"),
 		StringFlag("tls-key", "", "Path to TLS key file", "cert-key"),
+		StringFlag("lan_filter", "", "Channel list languages: 0 = all, 1 = Hindi + English, or language IDs like 1,6. Overrides default_languages in the config", "lang-filter", "lf"),
 	}
 }
 

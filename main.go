@@ -73,6 +73,9 @@ func main() {
 						cmd.Logger().Println("INFO: Overwriting host to [::] for public access (supports both IPv4 and IPv6)")
 						host = "[::]"
 					}
+					if err := cmd.ApplyLangFilter(c.String("lan_filter")); err != nil {
+						return err
+					}
 					port := c.String("port")
 					tls := c.Bool("tls")
 					tlsCertPath := c.String("tls-cert")
