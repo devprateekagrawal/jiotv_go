@@ -141,8 +141,8 @@
     {{ if .player_url }}
     <button
       class="btn btn-outline btn-sm sm:btn-md flex flex-row items-center justify-center gap-1 sm:gap-2"
-      onclick="window.history.back()"
-      aria-label="Go back to previous page"
+      onclick="if (location.pathname.indexOf('/play/') === 0) { location.href = '/'; } else { history.back(); }"
+      aria-label="Go back"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

@@ -164,7 +164,14 @@
           const parsedUrl = new URL(playerBaseURL, window.location.origin);
           parsedUrl.searchParams.set("pm", playerModeParam);
 
-          playerIframe.src = parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+          const next = parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+          // location.replace: changing src would add a history entry, and
+          // Back would then only step back inside the player frame.
+          try {
+            playerIframe.contentWindow.location.replace(next);
+          } catch (_) {
+            playerIframe.src = next;
+          }
         }
 
         function togglePlayerMode() {
