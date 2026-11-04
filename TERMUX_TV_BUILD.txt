@@ -1,0 +1,95 @@
+JioTV Go - TV build v2 (fork: devprateekagrawal/jiotv_go, branch tv-hindi)
+=========================================================================
+Run each line in Termux, one at a time (long-press > Paste).
+
+==== START COMMANDS (copy one) ====
+
+--lan_filter=1  -> only Hindi + English channels (509)
+--lan_filter=0  -> all channels (995)
+
+Background, Hindi + English  (Termux window can be closed):
+
+./jiotv_go bg start --args "--public --tls --tls-cert cert.pem --tls-key key.pem --lan_filter=1"
+
+Background, all channels:
+
+./jiotv_go bg start --args "--public --tls --tls-cert cert.pem --tls-key key.pem --lan_filter=0"
+
+Stop the background server (do this first if it is already running):
+
+./jiotv_go bg stop
+
+Normal (Termux window must stay open), Hindi + English:
+
+./jiotv_go serve --public --tls --tls-cert cert.pem --tls-key key.pem --lan_filter=1
+
+Normal, all channels:
+
+./jiotv_go serve --public --tls --tls-cert cert.pem --tls-key key.pem --lan_filter=0
+
+TV browser :  https://192.168.1.1:5001
+(On the TV press OK/Refresh once so the new look loads.)
+
+ONE-TIME: if the toml still has default_languages, remove it, otherwise
+it filters too when you start without --lan_filter:
+
+sed -i '/^default_languages/d' ~/jiotv_go.toml
+
+==== INSTALL THE NEW BUILD ====
+
+0) One-time only: allow Termux to read Downloads (tap Allow):
+
+termux-setup-storage
+
+1) Stop the running server: Ctrl+C in its Termux window, or:
+
+./jiotv_go bg stop
+
+2) Copy the new build in.
+   First TV build ever? Keep the official one as backup first:
+
+cd ~ && mv jiotv_go jiotv_go.old
+
+   (Already installed an earlier TV build? SKIP the mv line above.)
+
+cp ~/storage/downloads/jiotv_go_tv ~/jiotv_go && chmod +x ~/jiotv_go
+
+3) Keep the phone awake, then use a START COMMAND from the top:
+
+termux-wake-lock
+
+==== WHAT IS NEW ====
+- --lan_filter=1 / 0 : Hindi + English only, or all channels (see top).
+- Hindi first: if a channel has a Hindi version (Discovery Hindi,
+  Pogo Hindi ...), only the Hindi one is listed (62 copies hidden).
+- "Style" button (top bar): Classic or 6 TV styles (Lite Grid, Rows,
+  Guide, Side Rail, List + Preview, Apple TV). Saved on the TV.
+  The player page uses the same style.
+- Search bar stays fixed on top.
+- Lock badge = channel may need a separate subscription. It opens
+  straight away (no warning popup).
+- White channel logos now get a dark tile, so they are visible.
+- Player page: "Channels" button, and remote Back opens the channel list.
+
+==== IPTV ====
+M3U (Hindi first, default)  :  https://192.168.1.1:5001/playlist.m3u?q=high&c=split
+M3U (every language feed)   :  https://192.168.1.1:5001/playlist.m3u?q=high&c=split&pl=off
+EPG                         :  https://192.168.1.1:5001/epg.xml.gz
+(use http:// instead of https:// if you start without --tls)
+
+==== TURN "HINDI FIRST" OFF (config) ====
+
+echo 'preferred_language = "off"' >> ~/jiotv_go.toml
+
+Back on:
+
+sed -i '/^preferred_language/d' ~/jiotv_go.toml
+
+==== GO BACK TO THE OLD (OFFICIAL) BUILD ====
+
+./jiotv_go bg stop
+
+cd ~ && mv jiotv_go.old jiotv_go
+
+Do NOT run "./jiotv_go update" on this build unless you want the
+official version back (update replaces it).
