@@ -33,6 +33,7 @@ Get Started with JioTV Go by following the [Get Started](https://jiotv_go.rabil.
   - [Features 🌟](#features-)
   - [Table of Contents](#table-of-contents)
   - [Documentation](#documentation)
+  - [Router / browser notes (`tv-hindi` fork)](#router--browser-notes-tv-hindi-fork)
   - [Join the community on Telegram:](#join-the-community-on-telegram)
   - [Star History](#star-history)
   - [Contributors](#contributors)
@@ -45,6 +46,50 @@ Get Started with JioTV Go by following the [Get Started](https://jiotv_go.rabil.
 ## Documentation
 
 The complete documentation for JioTV Go is available at https://jiotv_go.rabil.me/ 📖
+
+## Router / browser notes (`tv-hindi` fork)
+
+This fork runs as a service on an OpenWrt router (linux/arm64, procd service `jiotvgo`). A Samsung TV browser watches it over https. The router-side setup and reinstall steps are kept outside this repo, in the router guide (section Y). This section records what was found while getting HD to play in a TV browser, and what was changed for it (2026-11-06).
+
+### Build for the router
+
+```bash
+CGO_ENABLED=0 GOEXPERIMENT=jsonv2,greenteagc GOOS=linux GOARCH=arm64 \
+  go build -o build/jiotv_go-linux-arm64 -trimpath -ldflags="-s -w" .
+```
+
+Run it with `JIOTV_PATH_PREFIX=/etc/jiotv_go/ JIOTV_LOG_PATH=/tmp/jiotv_go JIOTV_DRM=true jiotv_go --skip-update-check serve --host 0.0.0.0 --port 5001`. `JIOTV_DRM` defaults to true in `internal/config/config.go`. Set it to false to give IPTV apps that can't do Widevine an all-HLS playlist.
+
+### Widevine needs a secure context
+
+Browsers only enable EME (Widevine) on `https://` pages or `localhost`. On `http://<lan-ip>:5001` the DRM player's Widevine check fails, and the player falls back to HLS. For Colors HD that means 360p at most. Fix: put a TLS proxy in front. On the router that is `stunnel` with a self-signed cert (`:8443` → `127.0.0.1:5001`). The TV accepts the cert warning once, and DASH + Widevine then plays up to 1080p.
+
+Behind such a proxy, `c.Protocol()` still reports `http`. So any absolute URL the server builds from it is wrong on the https port. Prefer relative URLs in pages.
+
+### What Jio serves (checked 2026-11-06)
+
+| Channel | HLS | DASH |
+|---|---|---|
+| Colors HD (144), Aaj Tak, Colors Cineplex | `high`/`medium` master is audio only; `auto` has video (max 360p) | Widevine, up to 1080p |
+| SET HD (291), Sony SAB HD, Sony Max HD | 720p/1080p | clear (no `ContentProtection`), up to 1080p, though the API still returns a license URL |
+| Star Plus HD | 404 | not checked |
+
+### Changes in this fork
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Colors HD plays audio only over HLS | Jio's `high`/`medium` master playlists for some channels have no video variant | `RenderHandler` detects an audio-only master (`isAudioOnlyMaster`, tested in `audio_only_test.go`) and redirects to `/live/auto/<id>.m3u8` |
+| SET HD (and other Sony channels) never plays in a browser: `render.mpd` 403, then the HLS fallback's `render.ts` 403 | The proxy forwarded the browser's `Origin` and `Referer` headers to the Jio/Sony CDN, which answers 403 when it sees them. curl and IPTV apps don't send them, so they worked | `internalUtils.StripBrowserHeaders` removes both headers. It is called in `ProxyRequest` (`.ts`, EPG, images), `MpdHandler` and the DASH segment handler |
+| A clear DASH stream is forced through Widevine | The API sends a license URL for clear Sony streams. The player configured Widevine for them, and on http fell back to HLS | `player_drm.html` fetches the manifest first. If it has no `ContentProtection`, it drops the license URL and plays clear DASH. This also works on plain http |
+| No channel logos on the https port | Logo URLs were built as `c.Protocol()://host/jtvimage/...` = `http://<ip>:8443/...` | `IndexHandler` uses relative `/jtvimage/...` |
+
+Known leftover: when an MPD has no `<UTCTiming>`, `MpdHandler` adds `http://<host>/dashtime`, which is wrong behind an https proxy. The browser player sets `clockSyncUri: "/dashtime"` itself, so browser playback isn't affected.
+
+### Debugging tips
+
+* Access log: `$JIOTV_LOG_PATH/jiotv_go.log` (UTC times). For a channel, watch `render.mpd`, `render.dash`, `render.m3u8`, `render.key` and `render.ts`. Many `render.dash` 200s mean DASH is playing. `render.ts` lines after `/player/<id>?...&af=1` mean the DRM player gave up and fell back to HLS.
+* To reproduce browser-only failures with curl, add `-H "Origin: ..." -H "Referer: ..."`.
+* Check whether a stream is really encrypted: look for `ContentProtection` in the MPD, or for `encv`/`tenc`/`pssh` boxes in the init segment.
 
 ## Join the community on Telegram:
 
