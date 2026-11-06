@@ -202,7 +202,21 @@
           }
         });
 
-        const licenseUrl = "{{ .license_url }}";
+        let licenseUrl = "{{ .license_url }}";
+        // Jio sends a license URL even for clear DASH streams (e.g. Sony SET HD).
+        // Forcing Widevine on a clear manifest breaks playback (and needs a
+        // secure context), so check the manifest and play it as clear DASH.
+        if (licenseUrl) {
+          try {
+            const mpdResp = await fetch("{{ .play_url }}");
+            if (mpdResp.ok && !(await mpdResp.text()).includes("ContentProtection")) {
+              console.log("Manifest has no ContentProtection, playing as clear DASH");
+              licenseUrl = "";
+            }
+          } catch (e) {
+            console.warn("Manifest DRM check failed, keeping Widevine", e);
+          }
+        }
         const isDRM = !!licenseUrl;
 
         if (licenseUrl) {

@@ -192,14 +192,15 @@ func IndexHandler(c *fiber.Ctx) error {
 	category := c.Query("category")
 
 	// Process logo URLs for all channels
-	hostURL := c.Protocol() + "://" + c.Hostname()
 	for i, channel := range channels.Result {
 		if strings.HasPrefix(channel.LogoURL, "http://") || strings.HasPrefix(channel.LogoURL, "https://") {
 			// Custom channel with full URL, use as-is
 			channels.Result[i].LogoURL = channel.LogoURL
 		} else {
 			// Regular channel with relative path, add proxy prefix
-			channels.Result[i].LogoURL = hostURL + "/jtvimage/" + channel.LogoURL
+			// Relative URL: works on http :5001 and behind the https proxy (:8443),
+			// where c.Protocol() still reports "http".
+			channels.Result[i].LogoURL = "/jtvimage/" + channel.LogoURL
 		}
 	}
 
@@ -838,6 +839,15 @@ func RenderHandler(c *fiber.Ctx) error {
 			}
 		}
 	}
+	// Some channels (e.g. Colors HD, Aaj Tak) return an audio-only master for
+	// forced quality levels; only "auto" carries video. Switch to auto.
+	if statusCode == fiber.StatusOK && channel_id != "" && c.Query("q") != "auto" && isAudioOnlyMaster(renderResult) {
+		if os.Getenv("JIOTV_DEBUG") == "true" {
+			utils.Log.Printf("[DEBUG] RenderHandler - channel %s quality %q is audio-only, switching to auto", channel_id, c.Query("q"))
+		}
+		return c.Redirect("/live/auto/"+url.PathEscape(channel_id)+".m3u8", fiber.StatusFound)
+	}
+
 	// No client cookie: if upstream rotated __hdnea__, we'll embed the fresh token into rewritten URLs below
 
 	// baseUrl is the part of the url excluding suffix file.m3u8 and params is the part of the url after the suffix
@@ -1441,4 +1451,21 @@ func GenerateM3UPlaylist(channels []television.Channel, hostURL, quality, splitC
 	}
 
 	return m3uContent.String()
+}
+
+// isAudioOnlyMaster reports whether an HLS master playlist lists variants but
+// none of them carries video (no RESOLUTION and no video codec).
+func isAudioOnlyMaster(m []byte) bool {
+	found := false
+	for _, line := range bytes.Split(m, []byte("\n")) {
+		if !bytes.HasPrefix(line, []byte("#EXT-X-STREAM-INF:")) {
+			continue
+		}
+		found = true
+		if bytes.Contains(line, []byte("RESOLUTION=")) || bytes.Contains(line, []byte("avc1")) ||
+			bytes.Contains(line, []byte("hvc1")) || bytes.Contains(line, []byte("hev1")) {
+			return false
+		}
+	}
+	return found
 }

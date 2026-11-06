@@ -48,6 +48,14 @@ func SetCommonHeaders(c *fiber.Ctx, userAgent string) {
 	c.Response().Header.Del(fiber.HeaderServer)
 }
 
+// StripBrowserHeaders removes the Origin and Referer headers a browser adds.
+// They point at this server (e.g. https://192.168.1.1:8443) and some Jio CDNs
+// (Sony channels) answer 403 when they see them.
+func StripBrowserHeaders(c *fiber.Ctx) {
+	c.Request().Header.Del("Origin")
+	c.Request().Header.Del("Referer")
+}
+
 // SetPlayerHeaders sets headers commonly used for player requests
 func SetPlayerHeaders(c *fiber.Ctx, userAgent string) {
 	c.Request().Header.Set("User-Agent", userAgent)
@@ -75,6 +83,7 @@ func DecryptURLParam(paramName, encryptedURL string) (string, error) {
 
 // ProxyRequest performs a proxy request with common setup
 func ProxyRequest(c *fiber.Ctx, url string, client *fasthttp.Client, userAgent string) error {
+	StripBrowserHeaders(c)
 	if userAgent != "" {
 		SetCommonHeaders(c, userAgent)
 	}

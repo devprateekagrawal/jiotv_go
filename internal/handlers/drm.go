@@ -688,6 +688,7 @@ func MpdHandler(c *fiber.Ctx) error {
 	c.Request().Header.Set("User-Agent", PLAYER_USER_AGENT)
 	// remove Accept-Encoding header
 	c.Request().Header.Del("Accept-Encoding")
+	internalUtils.StripBrowserHeaders(c)
 
 	// AGGRESSIVE REFRESH: Make initial proxy request
 	if err := proxy.Do(c, requestUrl, TV.Client); err != nil {
@@ -919,6 +920,8 @@ func DashHandler(c *fiber.Ctx) error {
 	if hdneaToken != "" {
 		c.Request().Header.SetCookie("__hdnea__", hdneaToken)
 	}
+
+	internalUtils.StripBrowserHeaders(c)
 
 	// CRITICAL: Refresh credentials before proxying segments
 	EnsureFreshCredentials()
