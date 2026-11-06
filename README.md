@@ -85,6 +85,42 @@ Behind such a proxy, `c.Protocol()` still reports `http`. So any absolute URL th
 
 Known leftover: when an MPD has no `<UTCTiming>`, `MpdHandler` adds `http://<host>/dashtime`, which is wrong behind an https proxy. The browser player sets `clockSyncUri: "/dashtime"` itself, so browser playback isn't affected.
 
+### `/tv`: remote-friendly page for TV browsers
+
+`https://<router>:8443/tv` is one page for watching TV with only a remote. There is a channel list first, then the player. Its parts:
+
+* `GET /tv` renders `web/views/tv.html`.
+* `GET /tv/stream/:id` (`internal/handlers/tv.go`) returns `{mpd, license, host, path, hls}`. It uses `getDrmMpd`. All URLs are relative, so they work behind the https proxy.
+* The page loads `/channels` and `/nowplaying` (refreshed every minute). Channels sort Hindi first, then English, HD before SD. `TEST` channels are hidden.
+* The tabs are Favourites, Serial, News, Movies, Sports, Bhakti, Bachche, Gaane and Sab. Category tabs show only Hindi and English channels.
+
+Favourites, the last tab and the last channel are kept in `localStorage` (`tvFavs`, `tvTab`, `tvLast`). The default favourites are 144, 291, 471 and 173. Opening `/tv` starts the last channel; `/tv?home=1` skips that.
+
+Keys:
+
+| Where | Key | What it does |
+|---|---|---|
+| List | arrows | move between tiles |
+| List | Up from the first row | goes to the tabs |
+| List | OK | plays the channel |
+| Player | Up/Down, CH+/CH− (427/428, PageUp/PageDown) | change channel within the tab |
+| Player | OK | opens the info bar (show, favourite toggle); OK again toggles the favourite |
+| Player | Back (Esc, Backspace, Tizen 10009, webOS 461, or the browser's own Back via `popstate`) | closes the bar, then goes back to the list |
+
+* **Pointer mode.** If the TV browser moves a mouse pointer instead of sending arrow keys, tiles are clickable. A click on the player shows the bar with Pichla, Agla, Favourite and List buttons. The pointer hides after 3 s idle.
+* **Key test.** `/tv?keys=1` shows on screen which key reached the page.
+
+One Shaka player is reused for every channel. Each channel falls back in this order:
+
+1. DASH. A clear manifest (no `ContentProtection`) plays without Widevine. An encrypted one plays with Widevine `SW_SECURE_CRYPTO`, `clockSyncUri /dashtime`, and host/path params on `render.dash` segments.
+2. HLS `/live/high/<id>.m3u8`, through Shaka. It needs a secure context, because Shaka's AES-128 decryption uses Web Crypto.
+3. The old `/player/<id>?q=auto&af=1` page, in an iframe.
+
+Checked 2026-11-06 in a desktop browser:
+* SET HD played as clear DASH at 720p on plain http.
+* Colors HD on http fell through to the iframe player.
+* On `localhost` (a secure context) Colors HD played over Shaka HLS, because that browser had no Widevine.
+
 ### Debugging tips
 
 * Access log: `$JIOTV_LOG_PATH/jiotv_go.log` (UTC times). For a channel, watch `render.mpd`, `render.dash`, `render.m3u8`, `render.key` and `render.ts`. Many `render.dash` 200s mean DASH is playing. `render.ts` lines after `/player/<id>?...&af=1` mean the DRM player gave up and fell back to HLS.

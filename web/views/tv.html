@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JioTV</title>
+<style>
+  /* Everything is sized from the viewport width, so the page looks the same
+     on a 1920px TV browser, a 960px one and a laptop. 1rem = 1/80 of width. */
+  html { font-size: calc(100vw / 80); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #111; color: #f1efe8;
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+  #home { padding: 1.2rem 2rem 3rem; }
+  header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  header h1 { font-size: 1.6rem; margin: 0; font-weight: 600; }
+  #clock { margin-left: auto; font-size: 1.4rem; color: #b4b2a9; }
+  #tabs {
+    display: flex; gap: .6rem; margin-bottom: 1.2rem; flex-wrap: wrap;
+    position: sticky; top: 0; background: #111; padding: .6rem 0; z-index: 2;
+  }
+  .tab {
+    font-size: 1.1rem; padding: .45rem 1.2rem; border-radius: 2rem;
+    color: #b4b2a9; border: .18rem solid transparent;
+  }
+  .tab.sel { background: #2c2c2a; color: #fff; }
+  .tab.foc { border-color: #ef9f27; color: #fff; }
+  #grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+  .tile {
+    background: #262624; border-radius: .8rem; border: .2rem solid transparent;
+    padding: .8rem; display: flex; gap: .8rem; align-items: center;
+    transition: transform .12s;
+  }
+  .tile.foc { border-color: #ef9f27; background: #34342f; transform: scale(1.05); }
+  .logo {
+    width: 5.5rem; height: 3.6rem; flex: none; border-radius: .5rem;
+    background: #3a3a37; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; font-weight: 600; font-size: 1.2rem; color: #d3d1c7;
+  }
+  .logo img { max-width: 92%; max-height: 92%; object-fit: contain; }
+  .txt { min-width: 0; flex: 1; }
+  .nm { font-size: 1.1rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sh { font-size: .9rem; color: #b4b2a9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .2rem; }
+  .pr { height: .25rem; background: #3a3a37; border-radius: .2rem; margin-top: .4rem; overflow: hidden; }
+  .pr i { display: block; height: 100%; background: #ef9f27; }
+  .star { color: #ef9f27; }
+  #empty { font-size: 1.2rem; color: #b4b2a9; padding: 2rem 0; }
+
+  #pl { position: fixed; inset: 0; background: #000; display: none; z-index: 10; }
+  #pl.on { display: block; }
+  #pl video, #pl iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+  #msg {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 1.6rem; color: #d3d1c7; text-align: center; pointer-events: none;
+    text-shadow: 0 0 .5rem #000;
+  }
+  #bar {
+    position: absolute; left: 0; right: 0; bottom: 0; display: none;
+    align-items: center; gap: 1.2rem; padding: 1.4rem 2.4rem;
+    background: linear-gradient(transparent, rgba(0,0,0,.85) 35%);
+  }
+  #bar.on { display: flex; }
+  #bar .logo { width: 7rem; height: 4.6rem; }
+  #bnm { font-size: 1.7rem; font-weight: 600; }
+  #bsh { font-size: 1.15rem; color: #d3d1c7; margin-top: .3rem; }
+  #bhint { font-size: .95rem; color: #888780; margin-top: .4rem; }
+  #bfav {
+    font-size: 1.15rem; padding: .6rem 1.3rem; border-radius: 2rem;
+    border: .2rem solid #5f5e5a; white-space: nowrap;
+  }
+  #bfav.foc { border-color: #ef9f27; background: #34342f; }
+  .pbtn {
+    font-size: 1.15rem; padding: .6rem 1.1rem; border-radius: 2rem; white-space: nowrap;
+    border: .2rem solid #5f5e5a; display: none;
+  }
+  body.ptr .pbtn { display: block; }
+  body.ptr #bfav { margin-left: 0; }
+  #btns { margin-left: auto; display: flex; gap: .6rem; }
+  body.hidecur, body.hidecur * { cursor: none !important; }
+  #keylog {
+    position: fixed; top: 1rem; right: 1rem; z-index: 50; background: rgba(0,0,0,.8);
+    color: #ef9f27; font: 1rem monospace; padding: .6rem 1rem; border-radius: .5rem; display: none;
+  }
+</style>
+<script src="/static/external/shaka-player.ui.js"></script>
+</head>
+<body>
+<div id="home">
+  <header><h1>JioTV</h1><div id="clock"></div></header>
+  <div id="tabs"></div>
+  <div id="grid"></div>
+  <div id="empty" style="display:none"></div>
+</div>
+
+<div id="pl">
+  <video id="vid" autoplay playsinline></video>
+  <div id="msg"></div>
+  <div id="bar">
+    <div class="logo" id="blogo"></div>
+    <div class="txt">
+      <div id="bnm"></div>
+      <div id="bsh"></div>
+      <div id="bhint">Upar / Neeche: channel badlo &nbsp;·&nbsp; Back: channel list</div>
+    </div>
+    <div id="btns">
+      <div class="pbtn" data-a="prev">&#9650; Pichla</div>
+      <div class="pbtn" data-a="next">&#9660; Agla</div>
+      <div id="bfav"></div>
+      <div class="pbtn" data-a="list">&#9776; List</div>
+    </div>
+  </div>
+</div>
+<div id="keylog">
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- data ----------
+  const TABS = [
+    { name: "Favourites", fav: true },
+    { name: "Serial", cat: 5 },
+    { name: "News", cat: 12 },
+    { name: "Movies", cat: 6 },
+    { name: "Sports", cat: 8 },
+    { name: "Bhakti", cat: 15 },
+    { name: "Bachche", cat: 7 },
+    { name: "Gaane", cat: 13 },
+    { name: "Sab", all: true },
+  ];
+  // Colors HD, SET HD, Sony SAB HD, Aaj Tak
+  const DEFAULT_FAVS = ["144", "291", "471", "173"];
+  const COLS = 4;
+
+  function load(key, dflt) {
+    try { const v = localStorage.getItem(key); return v === null ? dflt : JSON.parse(v); } catch (e) { return dflt; }
+  }
+  function save(key, v) {
+    try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+  }
+
+  let channels = [];          // all channels, sorted
+  let byId = {};
+  let now = {};               // id -> {t, s, e}
+  let favs = load("tvFavs", DEFAULT_FAVS);
+  let tab = load("tvTab", 0);
+  if (!(tab >= 0 && tab < TABS.length)) tab = 0;
+  let list = [];              // channels in the current tab
+  let fi = 0;                 // focused tile
+  let zone = "grid";          // "tabs" | "grid"
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const initials = (n) => n.split(/\s+/).map((w) => w[0] || "").join("").slice(0, 3).toUpperCase();
+
+  // Hindi first, then English, then the rest; HD before SD.
+  function langRank(c) { return c.channelLanguageId === 1 ? 0 : c.channelLanguageId === 6 ? 1 : 2; }
+
+  function tabList(t) {
+    const T = TABS[t];
+    if (T.fav) return favs.map((id) => byId[id]).filter(Boolean);
+    if (T.all) return channels;
+    return channels.filter((c) => c.channelCategoryId === T.cat && langRank(c) < 2);
+  }
+
+  function logoHtml(c) {
+    if (c.logoUrl) {
+      return '<img loading="lazy" src="/jtvimage/' + esc(c.logoUrl) + '" alt="" onerror="this.parentNode.textContent=\'' + esc(initials(c.channel_name)) + '\'">';
+    }
+    return esc(initials(c.channel_name));
+  }
+
+  function showText(id) {
+    const p = now[id];
+    return p && p.t ? "Abhi: " + p.t : "";
+  }
+  function progress(id) {
+    const p = now[id];
+    if (!p || !p.s || !p.e) return 0;
+    const x = (Date.now() / 1000 - p.s) / (p.e - p.s);
+    return Math.max(0, Math.min(1, x));
+  }
+
+  // ---------- home ----------
+  function drawTabs() {
+    $("tabs").innerHTML = TABS.map((t, i) =>
+      '<div class="tab' + (i === tab ? " sel" : "") + (zone === "tabs" && i === tab ? " foc" : "") + '">' + t.name + "</div>"
+    ).join("");
+  }
+
+  function drawGrid() {
+    list = tabList(tab);
+    if (fi >= list.length) fi = Math.max(0, list.length - 1);
+    $("grid").innerHTML = list.map((c, i) =>
+      '<div class="tile" data-i="' + i + '" data-id="' + esc(c.channel_id) + '">' +
+        '<div class="logo">' + logoHtml(c) + "</div>" +
+        '<div class="txt"><div class="nm">' + esc(c.channel_name) +
+          (favs.indexOf(c.channel_id) >= 0 && !TABS[tab].fav ? ' <span class="star">&#9733;</span>' : "") +
+        '</div><div class="sh">' + esc(showText(c.channel_id)) + '</div>' +
+        '<div class="pr"><i style="width:' + Math.round(progress(c.channel_id) * 100) + '%"></i></div></div>' +
+      "</div>"
+    ).join("");
+    const e = $("empty");
+    if (!list.length) {
+      e.style.display = "";
+      e.textContent = TABS[tab].fav
+        ? "Abhi koi favourite nahi. Koi channel chalao, OK dabao aur “Favourite banao” chuno."
+        : "Is list mein koi channel nahi.";
+    } else {
+      e.style.display = "none";
+    }
+    focusTile(false);
+  }
+
+  function focusTile(scroll) {
+    const old = document.querySelector(".tile.foc");
+    if (old) old.classList.remove("foc");
+    if (zone !== "grid") return;
+    const el = document.querySelector('.tile[data-i="' + fi + '"]');
+    if (!el) return;
+    el.classList.add("foc");
+    if (scroll !== false) {
+      const r = el.getBoundingClientRect();
+      const top = window.innerHeight * 0.25, bottom = window.innerHeight * 0.85;
+      if (r.top < top || r.bottom > bottom) {
+        window.scrollBy(0, r.top - window.innerHeight * 0.4);
+      }
+    }
+  }
+
+  function refreshShows() {
+    document.querySelectorAll(".tile").forEach((el) => {
+      const id = el.getAttribute("data-id");
+      el.querySelector(".sh").textContent = showText(id);
+      el.querySelector(".pr i").style.width = Math.round(progress(id) * 100) + "%";
+    });
+    if (playing) drawBar();
+  }
+
+  function setTab(t) {
+    tab = t; fi = 0; save("tvTab", tab);
+    drawTabs(); drawGrid(); window.scrollTo(0, 0);
+  }
+
+  function homeKey(k) {
+    if (zone === "tabs") {
+      if (k === "left" && tab > 0) setTab(tab - 1);
+      else if (k === "right" && tab < TABS.length - 1) setTab(tab + 1);
+      else if ((k === "down" || k === "ok") && list.length) { zone = "grid"; drawTabs(); focusTile(); }
+      return;
+    }
+    if (k === "left" && fi % COLS > 0) fi--;
+    else if (k === "right" && fi + 1 < list.length && fi % COLS < COLS - 1) fi++;
+    else if (k === "down" && fi + COLS < list.length) fi += COLS;
+    else if (k === "down" && Math.floor(fi / COLS) < Math.floor((list.length - 1) / COLS)) fi = list.length - 1;
+    else if (k === "up") {
+      if (fi < COLS) { zone = "tabs"; drawTabs(); focusTile(); window.scrollTo(0, 0); return; }
+      fi -= COLS;
+    } else if (k === "ok" && list[fi]) { openPlayer(list[fi]); return; }
+    focusTile();
+  }
+
+  // ---------- player ----------
+  const video = $("vid");
+  let player = null;
+  let playing = null;       // channel object
+  let playList = [];        // list the player steps through with Up/Down
+  let seq = 0;              // increments on every channel change
+  let stream = null;        // current /tv/stream answer
+  let mode = "";            // "dash" | "hls" | "iframe"
+  let barTimer = null, barOpen = false, barFoc = false;
+  let iframe = null;
+  let wantFullscreen = true;
+
+  function msg(t) { $("msg").textContent = t || ""; }
+
+  function initShaka() {
+    if (player || !window.shaka) return;
+    shaka.polyfill.installAll();
+    player = new shaka.Player();
+    player.attach(video);
+    player.getNetworkingEngine().registerRequestFilter(function (type, req) {
+      if (type !== shaka.net.NetworkingEngine.RequestType.SEGMENT) return;
+      if (!stream || !stream.host || !stream.path) return;
+      if (req.uris[0].indexOf("/render.dash") < 0) return;
+      const u = new URL(req.uris[0], location.href);
+      if (u.pathname.indexOf("/render.dash/host/") >= 0 || u.searchParams.has("host")) return;
+      u.searchParams.append("host", stream.host);
+      u.searchParams.append("path", stream.path);
+      req.uris = [u.toString()];
+    });
+    player.addEventListener("error", function (ev) {
+      const d = ev.detail || {};
+      console.warn("shaka error", d.code, d);
+      if (d.severity === 2 /* CRITICAL */) onFail(seq);
+    });
+    video.addEventListener("playing", function () { msg(""); });
+    video.addEventListener("waiting", function () { if (playing) msg("Thoda ruko…"); });
+  }
+
+  function baseConfig(isDRM) {
+    player.resetConfiguration();
+    player.configure({
+      manifest: { dash: { clockSyncUri: "/dashtime" }, retryParameters: { maxAttempts: 2, timeout: 20000 } },
+      streaming: {
+        retryParameters: { maxAttempts: 2, backoffFactor: 2, timeout: 30000 },
+        bufferBehind: isDRM ? 2 : 5,
+        bufferingGoal: isDRM ? 6 : 20,
+        rebufferingGoal: 2,
+      },
+      abr: { defaultBandwidthEstimate: 8000000, restrictToElementSize: false },
+    });
+  }
+
+  async function widevineOK() {
+    if (!navigator.requestMediaKeySystemAccess) return false;
+    try {
+      await navigator.requestMediaKeySystemAccess("com.widevine.alpha", [{
+        initDataTypes: ["cenc"],
+        videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"' }],
+      }]);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  async function startVideo() {
+    video.muted = false;
+    try { await video.play(); }
+    catch (e) {
+      video.muted = true;
+      try { await video.play(); } catch (e2) {}
+    }
+    if (video.muted) msg("Awaaz ke liye OK dabao");
+  }
+
+  async function tryDash(my) {
+    let license = stream.license || "";
+    if (license) {
+      // Jio sends a license URL even for clear streams (Sony). Play those as clear DASH.
+      try {
+        const r = await fetch(stream.mpd);
+        if (r.ok && (await r.text()).indexOf("ContentProtection") < 0) license = "";
+      } catch (e) {}
+      if (my !== seq) return true;
+      if (license && !(await widevineOK())) return false;
+    }
+    baseConfig(!!license);
+    if (license) {
+      player.configure({
+        drm: {
+          servers: { "com.widevine.alpha": license },
+          advanced: { "com.widevine.alpha": { videoRobustness: "SW_SECURE_CRYPTO", audioRobustness: "SW_SECURE_CRYPTO" } },
+        },
+      });
+    }
+    await player.load(stream.mpd);
+    return true;
+  }
+
+  async function tryHls() {
+    baseConfig(false);
+    await player.load(stream.hls);
+    return true;
+  }
+
+  function useIframe(c) {
+    mode = "iframe";
+    msg("");
+    iframe = document.createElement("iframe");
+    iframe.setAttribute("tabindex", "-1");
+    iframe.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
+    iframe.src = "/player/" + encodeURIComponent(c.channel_id) + "?q=auto&af=1";
+    iframe.onload = function () { try { window.focus(); } catch (e) {} };
+    $("pl").insertBefore(iframe, $("msg"));
+  }
+
+  async function stopAll() {
+    if (iframe) { iframe.remove(); iframe = null; }
+    if (player) { try { await player.unload(); } catch (e) {} }
+  }
+
+  // A stream failed: DASH -> HLS -> old player page in an iframe.
+  async function onFail(my) {
+    if (my !== seq || !playing) return;
+    const c = playing;
+    if (mode === "dash" && stream && stream.hls) {
+      mode = "hls";
+      console.warn("DASH failed, trying HLS");
+      try { await stopAll(); if (my !== seq) return; await tryHls(); if (my === seq) await startVideo(); return; }
+      catch (e) { console.warn("HLS failed", e); }
+    }
+    if (my !== seq) return;
+    if (mode !== "iframe") { await stopAll(); if (my === seq) useIframe(c); }
+  }
+
+  async function tune(c) {
+    const my = ++seq;
+    playing = c;
+    save("tvLast", c.channel_id);
+    msg("Chal raha hai…");
+    showBar(false);
+    await stopAll();
+    if (my !== seq) return;
+    initShaka();
+    if (!player) { useIframe(c); return; }
+    try {
+      const r = await fetch("/tv/stream/" + encodeURIComponent(c.channel_id));
+      stream = await r.json();
+    } catch (e) { stream = null; }
+    if (my !== seq) return;
+    if (!stream) { useIframe(c); return; }
+    try {
+      if (stream.mpd) {
+        mode = "dash";
+        const ok = await tryDash(my);
+        if (my !== seq) return;
+        if (!ok) throw new Error("no widevine");
+      } else if (stream.hls) {
+        mode = "hls";
+        await tryHls();
+      } else {
+        throw new Error("no stream");
+      }
+      if (my !== seq) return;
+      await startVideo();
+    } catch (e) {
+      console.warn("load failed", mode, e);
+      onFail(my);
+    }
+  }
+
+  function openPlayer(c, fromStart) {
+    playList = list.length && list.indexOf(c) >= 0 ? list.slice() : (byId[c.channel_id] ? [c] : []);
+    $("pl").classList.add("on");
+    document.body.style.overflow = "hidden";
+    if (!fromStart) {
+      history.pushState({ tv: "play" }, "");
+      // The OK key press counts as a user gesture, so fullscreen is allowed here.
+      if (wantFullscreen && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(function () {});
+      }
+    }
+    tune(c);
+  }
+
+  async function closePlayer() {
+    seq++;
+    playing = null;
+    showBar(false);
+    await stopAll();
+    msg("");
+    $("pl").classList.remove("on");
+    document.body.style.overflow = "";
+    // Focus the channel that was playing, if it is in this tab.
+    const last = load("tvLast", "");
+    const i = list.findIndex((c) => c.channel_id === last);
+    if (i >= 0) { fi = i; zone = "grid"; drawTabs(); }
+    focusTile();
+  }
+
+  function drawBar() {
+    if (!playing) return;
+    const c = playing;
+    $("blogo").innerHTML = logoHtml(c);
+    $("bnm").textContent = c.channel_name;
+    $("bsh").textContent = showText(c.channel_id);
+    const isFav = favs.indexOf(c.channel_id) >= 0;
+    $("bfav").innerHTML = isFav ? "&#9733; Favourite se hatao" : "&#9734; Favourite banao";
+    $("bfav").className = barFoc ? "foc" : "";
+  }
+
+  function showBar(on, focusFav) {
+    clearTimeout(barTimer);
+    barOpen = !!on;
+    barFoc = !!(on && focusFav);
+    $("bar").classList.toggle("on", barOpen);
+    if (barOpen) {
+      drawBar();
+      barTimer = setTimeout(function () { showBar(false); }, barFoc ? 8000 : 4000);
+    }
+  }
+
+  function step(d) {
+    if (!playList.length) return;
+    let i = playList.findIndex((c) => c.channel_id === playing.channel_id);
+    i = (i + d + playList.length) % playList.length;
+    const c = playList[i];
+    const li = list.findIndex((x) => x.channel_id === c.channel_id);
+    if (li >= 0) fi = li;
+    tune(c).then(function () {});
+    showBar(true);
+  }
+
+  function toggleFav() {
+    const id = playing.channel_id;
+    const i = favs.indexOf(id);
+    if (i >= 0) favs.splice(i, 1); else favs.push(id);
+    save("tvFavs", favs);
+    drawBar();
+    drawGrid();
+  }
+
+  function playerKey(k) {
+    if (k === "up" || k === "chup") { step(-1); return; }
+    if (k === "down" || k === "chdown") { step(1); return; }
+    if (k === "ok") {
+      if (video.muted && mode !== "iframe") { video.muted = false; msg(""); showBar(true); return; }
+      if (barOpen && barFoc) { toggleFav(); showBar(true, true); return; }
+      showBar(true, true);
+      return;
+    }
+    if (k === "left" || k === "right") { showBar(true, barFoc); return; }
+    if (k === "back") {
+      if (barOpen) { showBar(false); return; }
+      history.back();
+    }
+  }
+
+  // ---------- keys ----------
+  function keyName(e) {
+    switch (e.key) {
+      case "ArrowUp": return "up";
+      case "ArrowDown": return "down";
+      case "ArrowLeft": return "left";
+      case "ArrowRight": return "right";
+      case "Enter": case " ": return "ok";
+      case "Escape": case "Backspace": case "BrowserBack": case "GoBack": return "back";
+      case "PageUp": case "ChannelUp": return "chup";
+      case "PageDown": case "ChannelDown": return "chdown";
+    }
+    switch (e.keyCode) {
+      case 38: return "up";
+      case 40: return "down";
+      case 37: return "left";
+      case 39: return "right";
+      case 13: return "ok";
+      case 10009: case 461: case 8: case 27: return "back";
+      case 427: case 33: return "chup";
+      case 428: case 34: return "chdown";
+    }
+    return "";
+  }
+
+  document.addEventListener("keydown", function (e) {
+    const k = keyName(e);
+    if (!k) return;
+    e.preventDefault();
+    if (playing || $("pl").classList.contains("on")) playerKey(k);
+    else if (k === "chup" || k === "chdown") homeKey(k === "chup" ? "up" : "down");
+    else if (k !== "back") homeKey(k);
+  });
+
+  // The browser's own Back (TV remote Return key) pops our player state.
+  window.addEventListener("popstate", function () {
+    if ($("pl").classList.contains("on")) closePlayer();
+  });
+
+  // Mouse / touch, for a laptop or phone.
+  $("grid").addEventListener("click", function (e) {
+    const t = e.target.closest(".tile");
+    if (!t) return;
+    fi = +t.getAttribute("data-i"); zone = "grid"; drawTabs(); focusTile(false);
+    openPlayer(list[fi]);
+  });
+  $("tabs").addEventListener("click", function (e) {
+    const t = e.target.closest(".tab");
+    if (!t) return;
+    const i = Array.prototype.indexOf.call($("tabs").children, t);
+    zone = "tabs"; setTab(i);
+  });
+  $("pl").addEventListener("click", function (e) {
+    if (e.target.id === "bfav") { toggleFav(); showBar(true, true); return; }
+    const b = e.target.closest(".pbtn");
+    if (b) {
+      const a = b.getAttribute("data-a");
+      if (a === "prev") step(-1);
+      else if (a === "next") step(1);
+      else if (a === "list") history.back();
+      return;
+    }
+    if (video.muted) { video.muted = false; msg(""); }
+    showBar(!barOpen);
+  });
+
+  // Key test: /tv?keys=1 shows what the remote sends to the page.
+  if (/[?&]keys=1/.test(location.search)) {
+    const kl = $("keylog");
+    kl.style.display = "block";
+    kl.textContent = "Remote ka koi button dabao";
+    document.addEventListener("keydown", function (e) {
+      kl.textContent = "key=" + e.key + "  code=" + e.keyCode + "  -> " + (keyName(e) || "?");
+    }, true);
+  }
+
+  // Pointer mode: when the TV browser moves a mouse pointer instead of sending
+  // arrow keys, show big on-screen buttons and hide the pointer when idle.
+  let curTimer = null;
+  document.addEventListener("mousemove", function () {
+    document.body.classList.add("ptr");
+    document.body.classList.remove("hidecur");
+    clearTimeout(curTimer);
+    curTimer = setTimeout(function () { document.body.classList.add("hidecur"); }, 3000);
+  });
+
+  // ---------- start ----------
+  function tick() {
+    const d = new Date();
+    $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  tick(); setInterval(tick, 15000);
+
+  function loadNow() {
+    fetch("/nowplaying").then((r) => r.json()).then((j) => { now = j || {}; refreshShows(); }).catch(function () {});
+  }
+
+  drawTabs();
+  $("grid").innerHTML = '<div id="empty">Channel aa rahe hain…</div>';
+  fetch("/channels").then((r) => r.json()).then(function (j) {
+    const all = (j && j.result) || [];
+    channels = all
+      .filter((c) => !/\bTEST\d*\b/i.test(c.channel_name))
+      .map((c, i) => ({ c: c, i: i }))
+      .sort((a, b) => langRank(a.c) - langRank(b.c) || (b.c.isHD ? 1 : 0) - (a.c.isHD ? 1 : 0) || a.i - b.i)
+      .map((x) => x.c);
+    byId = {};
+    channels.forEach((c) => { byId[c.channel_id] = c; });
+    drawGrid();
+    loadNow();
+    setInterval(loadNow, 60000);
+    // Pick up where we left off: start the last channel straight away.
+    const last = load("tvLast", "");
+    if (last && byId[last] && !/[?&]home=1/.test(location.search)) {
+      const i = list.findIndex((c) => c.channel_id === last);
+      if (i >= 0) fi = i;
+      history.replaceState({ tv: "home" }, "");
+      history.pushState({ tv: "play" }, "");
+      openPlayer(byId[last], true);
+    }
+  }).catch(function () {
+    $("grid").innerHTML = '<div id="empty">Channel list nahi mili. Router pe JioTV chalu hai? Page dobara kholo.</div>';
+  });
+})();
+</script>
+</body>
+</html>
