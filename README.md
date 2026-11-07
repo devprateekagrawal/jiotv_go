@@ -121,6 +121,12 @@ Checked 2026-11-06 in a desktop browser:
 * Colors HD on http fell through to the iframe player.
 * On `localhost` (a secure context) Colors HD played over Shaka HLS, because that browser had no Widevine.
 
+### /kodi/: channels as .strm files for Kodi
+
+`/kodi/` is an HTTP directory with one folder per category (Hindi and English channels) and one `.strm` file per channel, holding the same `#KODIPROP` lines as the M3U. In Kodi add it as a video source: Videos > Files > Add videos > Browse > Add network location, protocol "Web server directory (HTTP)", server `192.168.1.1`, port `5001`, path `kodi/`.
+
+Use it on Kodi builds that play DRM in the browser (kodi-tizen-wasm on Samsung TVs). They pick the browser player from the item's `#KODIPROP` lines, but a channel of the IPTV Simple PVR client gets those only after the player is chosen, so its Widevine channels fail in InputStream Adaptive ("A problem occurred with the DRM decryptor"). A `.strm` file carries them from the start. `?q=` on a `.strm` URL sets the quality (default `high`).
+
 ### Debugging tips
 
 * Access log: `$JIOTV_LOG_PATH/jiotv_go.log` (UTC times). For a channel, watch `render.mpd`, `render.dash`, `render.m3u8`, `render.key` and `render.ts`. Many `render.dash` 200s mean DASH is playing. `render.ts` lines after `/player/<id>?...&af=1` mean the DRM player gave up and fell back to HLS.
