@@ -24,7 +24,7 @@ func TestTVAppWgt(t *testing.T) {
 		got[f.Name] = b.String()
 	}
 	idx := got["index.html"]
-	for _, want := range []string{`<base href="http://192.168.1.1:5001/">`, "document.baseURI", "tizen.tvinputdevice.registerKey", "shaka-player.ui.js"} {
+	for _, want := range []string{`<base href="http://192.168.1.1:5001/">`, "document.baseURI", "tizen.tvinputdevice.registerKey", "/tvapp/log?m=", "shaka-player.ui.js"} {
 		if !strings.Contains(idx, want) {
 			t.Errorf("index.html lacks %q", want)
 		}

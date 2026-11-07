@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jiotv-go/jiotv_go/v3/pkg/utils"
 	"github.com/jiotv-go/jiotv_go/v3/web"
 )
 
@@ -29,7 +30,7 @@ const (
 )
 
 const tvAppConfig = `<?xml version="1.0" encoding="UTF-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://jiotv-go/tvapp" version="1.0.0" viewmodes="maximized">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://jiotv-go/tvapp" version="1.0.1" viewmodes="maximized">
   <tizen:application id="` + tvAppPackage + `.tv" package="` + tvAppPackage + `" required_version="2.3"/>
   <content src="index.html"/>
   <feature name="http://tizen.org/feature/screen.size.all"/>
@@ -37,11 +38,46 @@ const tvAppConfig = `<?xml version="1.0" encoding="UTF-8"?>
   <name>JioTV</name>
   <access origin="*" subdomains="true"/>
   <tizen:allow-navigation>*</tizen:allow-navigation>
+  <tizen:content-security-policy>default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; img-src * data: blob:; media-src * data: blob:; connect-src *;</tizen:content-security-policy>
   <tizen:privilege name="http://tizen.org/privilege/internet"/>
   <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
   <tizen:profile name="tv-samsung"/>
   <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
 </widget>
+`
+
+// tvAppReport runs first in <head>: it shows script errors on screen and sends
+// them to /tvapp/log, so a blank screen on the TV can be read in the router log.
+const tvAppReport = `<script>
+(function () {
+  var base = document.baseURI.replace(/\/$/, "");
+  function send(m) {
+    try { new Image().src = base + "/tvapp/log?m=" + encodeURIComponent(String(m).slice(0, 400)); } catch (e) {}
+  }
+  function show(m) {
+    try {
+      var d = document.getElementById("tvapperr");
+      if (!d) {
+        d = document.createElement("div");
+        d.id = "tvapperr";
+        d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:99;background:#600;color:#fff;font:20px monospace;padding:8px;white-space:pre-wrap";
+        (document.body || document.documentElement).appendChild(d);
+      }
+      d.textContent += m + "
+";
+    } catch (e) {}
+  }
+  window.addEventListener("error", function (e) {
+    var m = "error: " + (e.message || (e.target && (e.target.src || e.target.href)) || "?") + " @" + (e.filename || "") + ":" + (e.lineno || "");
+    send(m); show(m);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var m = "rejection: " + (e.reason && (e.reason.message || e.reason));
+    send(m); show(m);
+  });
+  send("start " + navigator.userAgent);
+})();
+</script>
 `
 
 // tvAppScript registers the remote's channel and media keys, and makes Back
@@ -68,7 +104,7 @@ func tvAppIndex(page, baseURL string) (string, error) {
 	if !strings.Contains(page, "<head>") || !strings.Contains(page, "</body>") {
 		return "", fmt.Errorf("tv page has no <head> or </body>")
 	}
-	page = strings.Replace(page, "<head>", "<head>\n<base href=\""+baseURL+"/\">", 1)
+	page = strings.Replace(page, "<head>", "<head>\n<base href=\""+baseURL+"/\">\n"+tvAppReport, 1)
 	page = strings.ReplaceAll(page, "new URL(req.uris[0], location.href)", "new URL(req.uris[0], document.baseURI)")
 	i := strings.LastIndex(page, "</body>")
 	return page[:i] + tvAppScript + page[i:], nil
@@ -128,6 +164,19 @@ func TVAppHandler(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/widget")
 		c.Set("Content-Disposition", "attachment; filename=\""+tvAppFile+"\"")
 		return c.Send(wgt)
+	case "log":
+		// One line from the app's error reporter.
+		m := strings.Map(func(r rune) rune {
+			if r < 32 || r == 127 {
+				return ' '
+			}
+			return r
+		}, c.Query("m"))
+		if len(m) > 400 {
+			m = m[:400]
+		}
+		utils.Log.Printf("TV app: %s", m)
+		return c.SendStatus(fiber.StatusNoContent)
 	case "":
 		if !strings.HasSuffix(c.Path(), "/") {
 			return c.Redirect(c.Path()+"/", fiber.StatusMovedPermanently)
