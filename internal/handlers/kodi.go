@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jiotv-go/jiotv_go/v3/pkg/television"
@@ -35,7 +37,32 @@ type kodiFolder struct {
 	channels map[string]television.Channel // file name -> channel
 }
 
+// Kodi probes every .strm of a folder it opens (HEAD and GET), so the
+// folders are cached: building them takes about a second on the router.
+var kodiCache struct {
+	sync.Mutex
+	lang    string
+	at      time.Time
+	folders map[string]*kodiFolder
+}
+
+const kodiCacheTTL = 10 * time.Minute
+
 func kodiFolders(lang string) (map[string]*kodiFolder, error) {
+	kodiCache.Lock()
+	defer kodiCache.Unlock()
+	if kodiCache.folders != nil && kodiCache.lang == lang && time.Since(kodiCache.at) < kodiCacheTTL {
+		return kodiCache.folders, nil
+	}
+	folders, err := buildKodiFolders(lang)
+	if err != nil {
+		return nil, err
+	}
+	kodiCache.lang, kodiCache.at, kodiCache.folders = lang, time.Now(), folders
+	return folders, nil
+}
+
+func buildKodiFolders(lang string) (map[string]*kodiFolder, error) {
 	resp, err := television.Channels()
 	if err != nil {
 		return nil, err
