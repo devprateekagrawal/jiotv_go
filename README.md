@@ -127,6 +127,10 @@ Checked 2026-11-06 in a desktop browser:
 
 Use it on Kodi builds that play DRM in the browser (kodi-tizen-wasm on Samsung TVs). They pick the browser player from the item's `#KODIPROP` lines, but a channel of the IPTV Simple PVR client gets those only after the player is chosen, so its Widevine channels fail in InputStream Adaptive ("A problem occurred with the DRM decryptor"). A `.strm` file carries them from the start. `?q=` on a `.strm` URL sets the quality (default `high`).
 
+### /tvapp/: the /tv page as a Samsung TV app
+
+A TV browser turns the remote's arrow keys into a mouse pointer. `/tvapp/jiotv-tv.wgt` packs the /tv page into an unsigned Tizen web app that talks to this server (the URL you download it from), gets every remote key, and closes on Back from the channel list. Download it on a phone from `http://<server>:5001/tvapp/` and install it with a tool that signs and installs .wgt files (for example apps2samsung).
+
 ### /kodilog/: send Kodi's log to the server
 
 A debug kodi.log is larger than paste.kodi.tv takes (2 MB). Add `http://<server>:5001/kodilog/` as a source in Kodi's File manager, then Add-ons > Install from zip file > that source > `script.jiotv.logsend.zip`, and run *JioTV: send log to router* from Add-ons > Program add-ons. It POSTs kodi.log and kodi.old.log to `/kodilog/upload`; the server keeps the newest 3 in `<temp dir>/jiotv_go/kodi-logs` (RAM on a router).
