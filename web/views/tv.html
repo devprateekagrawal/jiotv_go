@@ -276,6 +276,8 @@
   let iframe = null;
   let wantFullscreen = true;
 
+  const abs = (u) => new URL(u, document.baseURI).href;
+
   function msg(t) { $("msg").textContent = t || ""; }
 
   function initShaka() {
@@ -305,7 +307,7 @@
   function baseConfig(isDRM) {
     player.resetConfiguration();
     player.configure({
-      manifest: { dash: { clockSyncUri: "/dashtime" }, retryParameters: { maxAttempts: 2, timeout: 20000 } },
+      manifest: { dash: { clockSyncUri: abs("/dashtime") }, retryParameters: { maxAttempts: 2, timeout: 20000 } },
       streaming: {
         retryParameters: { maxAttempts: 2, backoffFactor: 2, timeout: 30000 },
         bufferBehind: isDRM ? 2 : 5,
@@ -410,6 +412,9 @@
     try {
       const r = await fetch("/tv/stream/" + encodeURIComponent(c.channel_id));
       stream = await r.json();
+      // Shaka resolves relative URLs against the page address, which is
+      // file:// in the TV app, so make them absolute against <base>.
+      if (stream) ["mpd", "hls", "license"].forEach(function (k) { if (stream[k]) stream[k] = abs(stream[k]); });
     } catch (e) { stream = null; }
     if (my !== seq) return;
     if (!stream) { useIframe(c); return; }

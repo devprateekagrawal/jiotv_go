@@ -52,8 +52,9 @@ const tvAppReport = `<script>
 (function () {
   var base = document.baseURI.replace(/\/$/, "");
   var keep = [];
+  function mask(m) { return String(m).replace(/(auth|hdnea|__hdnea__|token)=[^&"\s]*/g, "$1=***"); }
   function send(m) {
-    var u = base + "/tvapp/log?m=" + encodeURIComponent(String(m).slice(0, 400));
+    var u = base + "/tvapp/log?m=" + encodeURIComponent(mask(m).slice(0, 400));
     try { fetch(u, { mode: "no-cors", cache: "no-store" }).catch(function () {}); return; } catch (e) {}
     try { var i = new Image(); keep.push(i); i.src = u; } catch (e) {}
   }
@@ -66,7 +67,7 @@ const tvAppReport = `<script>
         d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99;background:rgba(96,0,0,.85);color:#fff;font:18px monospace;padding:6px;white-space:pre-wrap;max-height:30%;overflow:hidden";
         (document.body || document.documentElement).appendChild(d);
       }
-      d.textContent += m + String.fromCharCode(10);
+      d.textContent += mask(m) + String.fromCharCode(10);
     } catch (e) {}
   }
   function str(a) {
