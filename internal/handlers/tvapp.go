@@ -51,8 +51,11 @@ const tvAppConfig = `<?xml version="1.0" encoding="UTF-8"?>
 const tvAppReport = `<script>
 (function () {
   var base = document.baseURI.replace(/\/$/, "");
+  var keep = [];
   function send(m) {
-    try { new Image().src = base + "/tvapp/log?m=" + encodeURIComponent(String(m).slice(0, 400)); } catch (e) {}
+    var u = base + "/tvapp/log?m=" + encodeURIComponent(String(m).slice(0, 400));
+    try { fetch(u, { mode: "no-cors", cache: "no-store" }).catch(function () {}); return; } catch (e) {}
+    try { var i = new Image(); keep.push(i); i.src = u; } catch (e) {}
   }
   function show(m) {
     try {
@@ -60,22 +63,47 @@ const tvAppReport = `<script>
       if (!d) {
         d = document.createElement("div");
         d.id = "tvapperr";
-        d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:99;background:#600;color:#fff;font:20px monospace;padding:8px;white-space:pre-wrap";
+        d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99;background:rgba(96,0,0,.85);color:#fff;font:18px monospace;padding:6px;white-space:pre-wrap;max-height:30%;overflow:hidden";
         (document.body || document.documentElement).appendChild(d);
       }
-      d.textContent += m + "
-";
+      d.textContent += m + String.fromCharCode(10);
     } catch (e) {}
   }
+  function str(a) {
+    try {
+      if (a && a.code !== undefined && a.severity !== undefined) {
+        return "shaka code=" + a.code + " cat=" + a.category + " data=" + JSON.stringify(a.data).slice(0, 200);
+      }
+      if (a instanceof Error) return a.name + ": " + a.message;
+      if (typeof a === "object") return JSON.stringify(a).slice(0, 200);
+    } catch (e) {}
+    return String(a);
+  }
+  ["warn", "error"].forEach(function (k) {
+    var orig = console[k];
+    console[k] = function () {
+      var m = k + ": " + Array.prototype.map.call(arguments, str).join(" ");
+      send(m); show(m);
+      try { orig.apply(console, arguments); } catch (e) {}
+    };
+  });
   window.addEventListener("error", function (e) {
     var m = "error: " + (e.message || (e.target && (e.target.src || e.target.href)) || "?") + " @" + (e.filename || "") + ":" + (e.lineno || "");
     send(m); show(m);
   }, true);
   window.addEventListener("unhandledrejection", function (e) {
-    var m = "rejection: " + (e.reason && (e.reason.message || e.reason));
+    var m = "rejection: " + str(e.reason);
     send(m); show(m);
   });
-  send("start " + navigator.userAgent);
+  send("start " + navigator.userAgent + " screen=" + screen.width + "x" + screen.height + " inner=" + innerWidth + " dpr=" + devicePixelRatio);
+  window.addEventListener("load", function () {
+    var d = "diag shaka=" + !!window.shaka;
+    try { d += " supported=" + shaka.Player.isBrowserSupported(); } catch (e) { d += " supported=?"; }
+    d += " MSE=" + !!window.MediaSource + " EME=" + !!navigator.requestMediaKeySystemAccess + " secure=" + window.isSecureContext + " origin=" + location.origin;
+    if (!navigator.requestMediaKeySystemAccess) { send(d); return; }
+    navigator.requestMediaKeySystemAccess("com.widevine.alpha", [{ initDataTypes: ["cenc"], videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"' }] }])
+      .then(function () { send(d + " widevine=yes"); }, function (e) { send(d + " widevine=no " + str(e)); });
+  });
 })();
 </script>
 `
