@@ -825,6 +825,12 @@ func MpdHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// Kodi's InputStream Adaptive needs the Widevine PSSH in the manifest.
+	localBase := "http://" + c.Context().LocalAddr().String()
+	resBody = injectWidevinePSSH(resBody, func(body []byte, pos int) []byte {
+		return fetchInitPSSH(body, pos, localBase)
+	})
+
 	c.Response().SetBody(resBody)
 
 	return nil
