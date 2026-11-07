@@ -688,6 +688,9 @@ func MpdHandler(c *fiber.Ctx) error {
 	c.Request().Header.Set("User-Agent", PLAYER_USER_AGENT)
 	// remove Accept-Encoding header
 	c.Request().Header.Del("Accept-Encoding")
+	// The body is rewritten below, so a partial upstream reply (206 with the
+	// upstream Content-Range) would not match it. Kodi sends "Range: bytes=0-".
+	c.Request().Header.Del("Range")
 	internalUtils.StripBrowserHeaders(c)
 
 	// AGGRESSIVE REFRESH: Make initial proxy request
