@@ -14,6 +14,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jiotv-go/jiotv_go/v3/pkg/utils"
+	"github.com/valyala/fasthttp"
 )
 
 // /kodilog/ gets Kodi's log onto this server, with no paste site in between
@@ -125,12 +126,17 @@ func kodiLogDir() string {
 func kodiLogAddonZip(baseURL string) ([]byte, error) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
+	// A fixed time keeps the zip byte-identical between Kodi's requests.
+	modified := time.Date(2026, 11, 7, 0, 0, 0, 0, time.UTC)
+	if _, err := zw.CreateHeader(&zip.FileHeader{Name: kodiLogAddonID + "/", Modified: modified}); err != nil {
+		return nil, err
+	}
 	files := []struct{ name, body string }{
 		{kodiLogAddonID + "/addon.xml", kodiLogAddonXML},
 		{kodiLogAddonID + "/default.py", fmt.Sprintf(kodiLogScript, baseURL)},
 	}
 	for _, f := range files {
-		w, err := zw.CreateHeader(&zip.FileHeader{Name: f.name, Method: zip.Deflate, Modified: time.Now()})
+		w, err := zw.CreateHeader(&zip.FileHeader{Name: f.name, Method: zip.Deflate, Modified: modified})
 		if err != nil {
 			return nil, err
 		}
@@ -217,8 +223,20 @@ func KodiLogHandler(c *fiber.Ctx) error {
 		if err != nil {
 			return ErrorMessageHandler(c, err)
 		}
+		// Kodi reads a zip by seeking, so it needs byte ranges.
 		c.Set("Cache-Control", "no-cache")
+		c.Set("Accept-Ranges", "bytes")
 		c.Type("zip")
+		if r := c.Get(fiber.HeaderRange); r != "" {
+			start, end, err := fasthttp.ParseByteRange([]byte(r), len(z))
+			if err != nil {
+				c.Set("Content-Range", fmt.Sprintf("bytes */%d", len(z)))
+				return c.SendStatus(fiber.StatusRequestedRangeNotSatisfiable)
+			}
+			c.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, len(z)))
+			c.Status(fiber.StatusPartialContent)
+			return c.Send(z[start : end+1])
+		}
 		return c.Send(z)
 
 	case rest == "":
