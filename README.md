@@ -127,6 +127,10 @@ Checked 2026-11-06 in a desktop browser:
 
 Use it on Kodi builds that play DRM in the browser (kodi-tizen-wasm on Samsung TVs). They pick the browser player from the item's `#KODIPROP` lines, but a channel of the IPTV Simple PVR client gets those only after the player is chosen, so its Widevine channels fail in InputStream Adaptive ("A problem occurred with the DRM decryptor"). A `.strm` file carries them from the start. `?q=` on a `.strm` URL sets the quality (default `high`).
 
+### /kodilog/: send Kodi's log to the server
+
+A debug kodi.log is larger than paste.kodi.tv takes (2 MB). Add `http://<server>:5001/kodilog/` as a source in Kodi's File manager, then Add-ons > Install from zip file > that source > `script.jiotv.logsend.zip`, and run *JioTV: send log to router* from Add-ons > Program add-ons. It POSTs kodi.log and kodi.old.log to `/kodilog/upload`; the server keeps the newest 3 in `<temp dir>/jiotv_go/kodi-logs` (RAM on a router).
+
 ### Debugging tips
 
 * Access log: `$JIOTV_LOG_PATH/jiotv_go.log` (UTC times). For a channel, watch `render.mpd`, `render.dash`, `render.m3u8`, `render.key` and `render.ts`. Many `render.dash` 200s mean DASH is playing. `render.ts` lines after `/player/<id>?...&af=1` mean the DRM player gave up and fell back to HLS.
